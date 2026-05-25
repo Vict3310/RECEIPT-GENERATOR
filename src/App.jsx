@@ -109,8 +109,17 @@ const STATUS_OUTREACH_MESSAGES = {
   SALES: "Hello {name}, thank you for your patronage at Chuks Technology! Your total for {id} was {total} on {date}. Warranty: goods bought in good condition are not returnable after 1 week. Please contact us for support!",
   DIAGNOSING: "Hello {name}, your device is undergoing professional diagnostics at Chuks Technology. ID: {id}. We will update you with parts pricing shortly.",
   REPAIRING: "Hello {name}, your device is currently on our laboratory workbench under active repairs. ID: {id}. Thank you for your patience.",
-  READY_FOR_PICKUP: "Hello {name}, your device is READY FOR PICKUP at Chuks Technology! Please visit our store at Otigba Street to test and collect. ID: {id}. Balance due: {total}.",
+  READY_FOR_PICKUP: "Hello {name}, your device is READY FOR PICKUP at Chuks Technology! Please visit our store at Shop 20, Adejoke Plaza, 1 Oshitelu Street to test and collect. ID: {id}. Balance due: {total}.",
   COMPLETED: "Hello {name}, thank you for picking up your device today. We hope you are satisfied with our repairs & sales solutions! Chuks Technology."
+};
+
+// Global Exchange Rates (Base Currency is USD $)
+const EXCHANGE_RATES = {
+  "$": 1.0,
+  "₦": 1600.0,
+  "€": 0.92,
+  "£": 0.79,
+  "¥": 7.23
 };
 
 // Presets data customized for a phone sales & repair center
@@ -139,6 +148,13 @@ function App() {
   const [currencySymbol, setCurrencySymbol] = useState(() => {
     return localStorage.getItem("receiptgen_currency") || "$";
   });
+
+  // Dynamically converts a base USD value into the selected display currency
+  const displayVal = (val) => {
+    if (val === undefined || val === null || isNaN(val)) return 0;
+    const rate = EXCHANGE_RATES[currencySymbol] || 1.0;
+    return val * rate;
+  };
 
   // Receipt ticket elements toggles configuration
   const [showQRCode, setShowQRCode] = useState(() => {
@@ -396,21 +412,28 @@ function App() {
     const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const receiptId = `RG-${Math.floor(1000 + Math.random() * 9000)}-${new Date().getFullYear().toString().slice(-2)}`;
 
+    // Convert values to base USD before saving
+    const rate = EXCHANGE_RATES[currencySymbol] || 1.0;
+
     const newReceipt = {
       id: receiptId,
       customerName: customerName.trim(),
       phoneNumber: phoneNumber.trim(),
       timestamp,
       status: transactionStatus,
-      items: validItems.map(i => ({
-        name: i.name.trim(),
-        price: parseFloat(i.price),
-        cost: i.cost ? parseFloat(i.cost) : parseFloat(i.price) * 0.7,
-        quantity: parseInt(i.quantity) || 1
-      })),
-      subtotal: subtotalVal,
-      tax: taxVal,
-      total: totalVal,
+      items: validItems.map(i => {
+        const pVal = parseFloat(i.price) / rate;
+        const cVal = i.cost ? parseFloat(i.cost) / rate : pVal * 0.7;
+        return {
+          name: i.name.trim(),
+          price: pVal,
+          cost: cVal,
+          quantity: parseInt(i.quantity) || 1
+        };
+      }),
+      subtotal: subtotalVal / rate,
+      tax: taxVal / rate,
+      total: totalVal / rate,
       notes: notes.trim()
     };
 
@@ -440,7 +463,7 @@ function App() {
     const clientRow = {
       phone: phoneNumber.trim(),
       name: customerName.trim(),
-      last_transaction_amount: totalVal,
+      last_transaction_amount: newReceipt.total,
       total_transactions: existingClient ? existingClient.totalTransactions + 1 : 1,
       last_transaction_date: timestamp
     };
@@ -469,12 +492,13 @@ function App() {
   };
 
   const handleReopenReceipt = (receipt) => {
+    const rate = EXCHANGE_RATES[currencySymbol] || 1.0;
     setCustomerName(receipt.customerName);
     setPhoneNumber(receipt.phoneNumber);
     setItems(receipt.items.map(item => ({
       name: item.name,
-      price: item.price.toString(),
-      cost: item.cost !== undefined ? item.cost.toString() : "",
+      price: (item.price * rate).toFixed(2),
+      cost: item.cost !== undefined ? (item.cost * rate).toFixed(2) : "",
       quantity: item.quantity
     })));
     setNotes(receipt.notes || "");
@@ -519,7 +543,7 @@ function App() {
 
     return baseMessage
       .replace(/{name}/g, client.name)
-      .replace(/{total}/g, `${currencySymbol}${client.lastTransactionAmount.toFixed(2)}`)
+      .replace(/{total}/g, `${currencySymbol}${displayVal(client.lastTransactionAmount).toFixed(2)}`)
       .replace(/{date}/g, client.lastTransactionDate)
       .replace(/{id}/g, receiptId);
   };
@@ -535,7 +559,7 @@ function App() {
     const rows = directory.map(c => [
       `"${c.name.replace(/"/g, '""')}"`,
       `"${c.phone}"`,
-      c.lastTransactionAmount.toFixed(2),
+      displayVal(c.lastTransactionAmount).toFixed(2),
       c.totalTransactions,
       c.lastTransactionDate
     ]);
@@ -699,7 +723,7 @@ function App() {
           <div className="flex flex-col">
             <span className="text-[10px] font-mono text-neutral-500 uppercase">SYS_TOTAL_REVENUE</span>
             <span className="text-xl font-mono font-extrabold text-white mt-1.5">
-              {currencySymbol}{analytics.totalVolume.toFixed(2)}
+              {currencySymbol}{displayVal(analytics.totalVolume).toFixed(2)}
             </span>
           </div>
           <TrendingUp className={`w-5 h-5 ${cTextAccent} opacity-80`} />
@@ -719,7 +743,7 @@ function App() {
           <div className="flex flex-col">
             <span className="text-[10px] font-mono text-neutral-500 uppercase">AVERAGE_TICKET_VAL</span>
             <span className="text-xl font-mono font-extrabold text-white mt-1.5">
-              {currencySymbol}{analytics.aov.toFixed(2)}
+              {currencySymbol}{displayVal(analytics.aov).toFixed(2)}
             </span>
           </div>
           <Layers className={`w-5 h-5 ${cTextAccent} opacity-80`} />
@@ -730,7 +754,7 @@ function App() {
           <div className="flex flex-col">
             <span className="text-[10px] font-mono text-neutral-500 uppercase">NET_PROFIT_MARGIN</span>
             <span className="text-xl font-mono font-extrabold text-green-400 mt-1.5">
-              {currencySymbol}{analytics.totalProfit.toFixed(2)}
+              {currencySymbol}{displayVal(analytics.totalProfit).toFixed(2)}
             </span>
           </div>
           <Percent className="w-5 h-5 text-green-400 opacity-80" />
@@ -1108,7 +1132,7 @@ function App() {
                     <tr key={client.phone} className="group hover:bg-neutral-800/10 transition-colors">
                       <td className="py-3 text-white font-medium">{client.name}</td>
                       <td className="py-3 text-neutral-400">{client.phone}</td>
-                      <td className="py-3 text-right text-white font-semibold">{currencySymbol}{client.lastTransactionAmount.toFixed(2)}</td>
+                      <td className="py-3 text-right text-white font-semibold">{currencySymbol}{displayVal(client.lastTransactionAmount).toFixed(2)}</td>
                       <td className="py-3 text-center text-neutral-500">{client.totalTransactions}</td>
                       <td className="py-3 text-right">
                         <a
@@ -1175,7 +1199,7 @@ function App() {
 
               {/* Coordinates stamp */}
               <div className="text-[8px] text-neutral-700 select-none print:hidden font-mono uppercase block mb-1">
-                COORDS: 6.5937° N, 3.3422° E // OTIGBA ST.
+                COORDS: 6.5932° N, 3.3424° E // OSHITELU ST.
               </div>
 
               {/* Receipt Header details */}
@@ -1186,7 +1210,7 @@ function App() {
                   </div>
                   <span className={`${cTextAccent} font-bold tracking-widest text-sm print:text-black uppercase`}>CHUKS TECHNOLOGY</span>
                   <span className="text-[9px] text-neutral-500 uppercase mt-0.5">PHONE SALES, ACCESSORIES & REPAIRS</span>
-                  <span className="text-[8px] text-neutral-600 print:text-neutral-500 uppercase">No. 18 Otigba Street, Computer Village, Ikeja, Lagos</span>
+                  <span className="text-[8px] text-neutral-600 print:text-neutral-500 uppercase">Shop 20, Adejoke Plaza, 1 Oshitelu Street, Beside GTBANK Computer Village, Ikeja</span>
 
                   {/* Ledger status display on visual invoice */}
                   <div className="mt-1 flex items-center gap-1.5 font-mono text-[9px]">
@@ -1243,7 +1267,7 @@ function App() {
                     <div className="flex gap-8 shrink-0">
                       <span className="text-neutral-500 font-medium">x{item.quantity}</span>
                       <span className="w-14 text-right text-white print:text-black font-semibold">
-                        {currencySymbol}{(item.price * item.quantity).toFixed(2)}
+                        {currencySymbol}{displayVal(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -1254,15 +1278,15 @@ function App() {
               <div className="border-t border-neutral-800 border-dashed pt-3 flex flex-col gap-1 text-right">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-neutral-500 uppercase">SUBTOTAL:</span>
-                  <span className="text-neutral-300 print:text-black">{currencySymbol}{activeReceipt?.subtotal.toFixed(2)}</span>
+                  <span className="text-neutral-300 print:text-black">{currencySymbol}{displayVal(activeReceipt?.subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-neutral-500 uppercase">VAT/TAX ({vatRate}%):</span>
-                  <span className="text-neutral-300 print:text-black">{currencySymbol}{activeReceipt?.tax.toFixed(2)}</span>
+                  <span className="text-neutral-300 print:text-black">{currencySymbol}{displayVal(activeReceipt?.tax).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold border-t border-neutral-800 pt-2 text-white print:text-black mt-1">
                   <span className={`uppercase ${cTextAccent} print:text-black`}>TOTAL DUE:</span>
-                  <span>{currencySymbol}{activeReceipt?.total.toFixed(2)}</span>
+                  <span>{currencySymbol}{displayVal(activeReceipt?.total).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -1362,7 +1386,7 @@ function App() {
                       <span className="text-[9px] text-neutral-600 uppercase">// {receipt.timestamp}</span>
                     </div>
                     <span className={`font-mono text-xs ${cTextAccent} font-bold`}>
-                      {currencySymbol}{receipt.total.toFixed(2)}
+                      {currencySymbol}{displayVal(receipt.total).toFixed(2)}
                     </span>
                   </div>
 
@@ -1395,7 +1419,7 @@ function App() {
 
                       {/* Display estimated margin */}
                       <span className="text-[10px] text-neutral-500">
-                        Est. Profit: <span className="text-green-500 font-semibold">{currencySymbol}{(receipt.items.reduce((sum, i) => sum + ((i.price - (i.cost !== undefined ? i.cost : i.price * 0.7)) * i.quantity), 0)).toFixed(1)}</span>
+                        Est. Profit: <span className="text-green-500 font-semibold">{currencySymbol}{displayVal(receipt.items.reduce((sum, i) => sum + ((i.price - (i.cost !== undefined ? i.cost : i.price * 0.7)) * i.quantity), 0)).toFixed(1)}</span>
                       </span>
                     </div>
                   </div>
@@ -1530,14 +1554,20 @@ function App() {
             <div>
               <div style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
               <div style={{ fontSize: '9px', opacity: 0.65, textTransform: 'uppercase', marginTop: '3px', letterSpacing: '0.08em' }}>PHONE SALES, ACCESSORIES &amp; SERVICE CENTER</div>
-              <div style={{ fontSize: '8px', opacity: 0.45, marginTop: '2px', letterSpacing: '0.04em' }}>No. 18 Otigba Street, Computer Village, Ikeja, Lagos</div>
+              <div style={{ fontSize: '8px', opacity: 0.45, marginTop: '2px', letterSpacing: '0.04em' }}>Shop 20, Adejoke Plaza, 1 Oshitelu Street, Beside GTBANK Computer Village, Ikeja</div>
             </div>
           </div>
 
           {/* ── REF / TIMESTAMP STRIP ── */}
-          <div style={{ background: '#f3f4f6', padding: '7px 24px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', borderBottom: '1px solid #e5e7eb', letterSpacing: '0.03em' }}>
-            <span>&#128203; SYS_REF: <strong>{activeReceipt?.id}</strong></span>
-            <span>&#128336; {activeReceipt?.timestamp}</span>
+          <div style={{ background: '#f3f4f6', padding: '7px 24px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', borderBottom: '1px solid #e5e7eb', letterSpacing: '0.03em', alignItems: 'center' }}>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={{ display: 'inline-block', verticalAlign: '-1.5px', marginRight: '4px' }}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              SYS_REF: <strong>{activeReceipt?.id}</strong>
+            </span>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={{ display: 'inline-block', verticalAlign: '-1.5px', marginRight: '4px' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {activeReceipt?.timestamp}
+            </span>
           </div>
 
           <div style={{ padding: '0 24px 24px' }}>
@@ -1603,8 +1633,8 @@ function App() {
                   <tr key={index} style={{ background: index % 2 === 0 ? '#ffffff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: '8px 8px' }}>{item.name}</td>
                     <td style={{ padding: '8px 8px', textAlign: 'center', color: '#6b7280' }}>x{item.quantity}</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', color: '#6b7280' }}>{currencySymbol}{item.price.toFixed(2)}</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: '700' }}>{currencySymbol}{(item.price * item.quantity).toFixed(2)}</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right', color: '#6b7280' }}>{currencySymbol}{displayVal(item.price).toFixed(2)}</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: '700' }}>{currencySymbol}{displayVal(item.price * item.quantity).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1614,22 +1644,25 @@ function App() {
             <div style={{ border: '1px solid #e5e7eb', borderTop: 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: '10px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
                 <span style={{ color: '#6b7280', textTransform: 'uppercase' }}>Subtotal:</span>
-                <span>{currencySymbol}{activeReceipt?.subtotal.toFixed(2)}</span>
+                <span>{currencySymbol}{displayVal(activeReceipt?.subtotal).toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: '10px', borderBottom: '2px solid #111827', background: '#f9fafb' }}>
                 <span style={{ color: '#6b7280', textTransform: 'uppercase' }}>VAT/TAX ({vatRate}%):</span>
-                <span>{currencySymbol}{activeReceipt?.tax.toFixed(2)}</span>
+                <span>{currencySymbol}{displayVal(activeReceipt?.tax).toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', fontSize: '14px', fontWeight: '900', background: '#111827', color: '#fff', letterSpacing: '0.04em' }}>
                 <span>TOTAL DUE:</span>
-                <span>{currencySymbol}{activeReceipt?.total.toFixed(2)}</span>
+                <span>{currencySymbol}{displayVal(activeReceipt?.total).toFixed(2)}</span>
               </div>
             </div>
 
             {/* ── MEMO BOX ── */}
             {activeReceipt?.notes && (
               <div style={{ marginTop: '14px', background: '#fffbeb', border: '1px solid #fbbf24', padding: '10px 12px', fontSize: '10px' }}>
-                <div style={{ fontWeight: '700', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px', color: '#92400e' }}>&#128203; Transaction Memo:</div>
+                <div style={{ fontWeight: '700', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px', color: '#92400e', display: 'flex', alignItems: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={{ marginRight: '4px' }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                  Transaction Memo:
+                </div>
                 <div style={{ fontStyle: 'italic', color: '#374151', lineHeight: '1.5' }}>&ldquo;{activeReceipt.notes}&rdquo;</div>
               </div>
             )}
@@ -1637,7 +1670,10 @@ function App() {
             {/* ── WARRANTY BOX ── */}
             {showWarranty && (
               <div style={{ marginTop: '12px', border: '1px solid #fca5a5', background: '#fff5f5', padding: '10px 12px', fontSize: '9px', lineHeight: '1.7' }}>
-                <div style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px', color: '#991b1b' }}>&#9888; WARRANTY &amp; RETURN POLICY // {warrantyData.label}</div>
+                <div style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px', color: '#991b1b', display: 'flex', alignItems: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={{ marginRight: '4px' }}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  WARRANTY &amp; RETURN POLICY // {warrantyData.label}
+                </div>
                 <div style={{ color: '#374151' }}>1. Goods bought in good condition are not returnable after one week (7 days).</div>
                 <div style={{ color: '#374151' }}>2. Repaired screens/parts have 14 days warranty. Liquid or screen break voids warranty.</div>
               </div>
