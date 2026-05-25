@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #0A0A0A;
+    color: #E5E5E5;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+
+  /* Razor-thin structural borders */
+  .border-thin {
+    border-width: 0.5px;
+  }
+
+  /* Hollow wireframe heading styling */
+  .text-wireframe {
+    -webkit-text-stroke: 1.5px currentColor;
+    color: transparent;
+  }
+
+  .text-wireframe-thin {
+    -webkit-text-stroke: 0.8px currentColor;
+    color: transparent;
+  }
+
+  /* Print-specific layout styling */
+  @media print {
+
+    /* Page size and margin */
+    @page {
+      size: A4 portrait;
+      margin: 12mm;
+    }
+
+    /* Clean white slate */
+    html,
+    body {
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    /* Strip padding from the outer app wrapper but keep it visible */
+    #root>div {
+      padding: 0 !important;
+      margin: 0 !important;
+      background: white !important;
+      min-height: unset !important;
+      display: block !important;
+    }
+
+    /* Hide the dashboard chrome: header, analytics banner, main grid, modals */
+    header,
+    main,
+    .no-print {
+      display: none !important;
+    }
+
+    /* Only show the print-only receipt template */
+    .print-only {
+      display: block !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      /* Force browser to render background colors & images when printing */
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    /* Force the receipt to stay on one page */
+    .print-only>div {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+  }
+}
+
+/* Scrollbar styles to match industrial tech grid theme */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3378FF;
+}
+
+/* GSAP load class initialization to prevent flash of unstyled content */
+.gsap-reveal {
+  opacity: 0;
+}
