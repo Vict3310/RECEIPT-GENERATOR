@@ -531,6 +531,21 @@ function App() {
     await supabase.from('receipts').update({ status: newStatus }).eq('id', receiptId);
   };
 
+  // Delete receipt — optimistic UI + persist to Supabase
+  const handleDeleteReceipt = async (receiptId) => {
+    if (!window.confirm("Are you sure you want to delete this receipt? This action cannot be undone.")) return;
+    
+    setLedger(prevLedger => prevLedger.filter(rx => rx.id !== receiptId));
+    if (activeReceipt && activeReceipt.id === receiptId) {
+      setActiveReceipt(null);
+    }
+    const { error } = await supabase.from('receipts').delete().eq('id', receiptId);
+    if (error) {
+      console.error("Failed to delete receipt", error);
+      setErrorMessage(`DELETE ERROR: ${error.message}`);
+    }
+  };
+
   // Dynamic outreach message based on the most-recent matching transaction's repair status
   const getOutreachMessage = (client) => {
     const matchingReceipt = ledger.find(
@@ -721,7 +736,7 @@ function App() {
 
         <div className={`border-thin ${cPanel} p-4 flex items-center justify-between`}>
           <div className="flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-500 uppercase">SYS_TOTAL_REVENUE</span>
+            <span className="text-[10px] font-mono text-neutral-500 uppercase">TOTAL REVENUE (ALL TIME)</span>
             <span className="text-xl font-mono font-extrabold text-white mt-1.5">
               {currencySymbol}{displayVal(analytics.totalVolume).toFixed(2)}
             </span>
@@ -731,9 +746,9 @@ function App() {
 
         <div className={`border-thin ${cPanel} p-4 flex items-center justify-between`}>
           <div className="flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-500 uppercase">ACTIVE_DIRECTORY_POOL</span>
+            <span className="text-[10px] font-mono text-neutral-500 uppercase">TOTAL CLIENTS REGISTERED</span>
             <span className="text-xl font-mono font-extrabold text-white mt-1.5">
-              {analytics.activeClients} CORES
+              {analytics.activeClients}
             </span>
           </div>
           <Users className={`w-5 h-5 ${cTextAccent} opacity-80`} />
@@ -741,7 +756,7 @@ function App() {
 
         <div className={`border-thin ${cPanel} p-4 flex items-center justify-between`}>
           <div className="flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-500 uppercase">AVERAGE_TICKET_VAL</span>
+            <span className="text-[10px] font-mono text-neutral-500 uppercase">AVERAGE RECEIPT VALUE</span>
             <span className="text-xl font-mono font-extrabold text-white mt-1.5">
               {currencySymbol}{displayVal(analytics.aov).toFixed(2)}
             </span>
@@ -752,7 +767,7 @@ function App() {
         {/* Customized: NET PROFIT MARGIN TRACKER */}
         <div className={`border-thin ${cPanel} p-4 flex items-center justify-between`}>
           <div className="flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-500 uppercase">NET_PROFIT_MARGIN</span>
+            <span className="text-[10px] font-mono text-neutral-500 uppercase">TOTAL NET PROFIT (EST.)</span>
             <span className="text-xl font-mono font-extrabold text-green-400 mt-1.5">
               {currencySymbol}{displayVal(analytics.totalProfit).toFixed(2)}
             </span>
@@ -1469,6 +1484,19 @@ function App() {
                         <RefreshCw className="w-3 h-3" />
                         Load
                       </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteReceipt(receipt.id);
+                        }}
+                        className="text-[10px] font-mono text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors uppercase ml-1"
+                        title="Delete Receipt"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Del
+                      </button>
                     </div>
                   </div>
 
@@ -1549,7 +1577,7 @@ function App() {
             <img
               src={logo}
               alt="Chuks Technology"
-              style={{ height: '52px', width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)', flexShrink: 0 }}
+              style={{ height: '72px', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
             />
             <div>
               <div style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
