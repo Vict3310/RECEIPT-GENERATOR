@@ -1580,9 +1580,9 @@ function App() {
               style={{ height: '72px', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
-              <div style={{ fontSize: '9px', opacity: 0.65, textTransform: 'uppercase', marginTop: '3px', letterSpacing: '0.08em' }}>PHONE SALES, ACCESSORIES &amp; SERVICE CENTER</div>
-              <div style={{ fontSize: '8px', opacity: 0.45, marginTop: '2px', letterSpacing: '0.04em' }}>Shop 20, Adejoke Plaza, 1 Oshitelu Street, Beside GTBANK Computer Village, Ikeja</div>
+              <div style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
+              <div style={{ fontSize: '12px', fontWeight: '700', opacity: 0.85, textTransform: 'uppercase', marginTop: '4px', letterSpacing: '0.08em' }}>PHONE SALES, ACCESSORIES &amp; SERVICE CENTER</div>
+              <div style={{ fontSize: '10px', fontWeight: '600', opacity: 0.72, marginTop: '3px', letterSpacing: '0.04em' }}>Shop 20, Adejoke Plaza, 1 Oshitelu Street, Beside GTBANK Computer Village, Ikeja</div>
             </div>
           </div>
 
