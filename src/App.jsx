@@ -1573,14 +1573,14 @@ function App() {
         <div style={{ fontFamily: "'Courier New', Courier, monospace", color: '#000', background: '#fff', maxWidth: '100%' }}>
 
           {/* ── HEADER BAR ── */}
-          <div style={{ background: '#111827', color: '#fff', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ background: '#111827', color: '#fff', padding: '20px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
             <img
               src={logo}
               alt="Chuks Technology"
-              style={{ height: '72px', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+              style={{ height: '96px', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
+              <div style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '0.15em', textTransform: 'uppercase' }}>CHUKS TECHNOLOGY</div>
               <div style={{ fontSize: '12px', fontWeight: '700', opacity: 0.85, textTransform: 'uppercase', marginTop: '4px', letterSpacing: '0.08em' }}>PHONE SALES, ACCESSORIES &amp; SERVICE CENTER</div>
               <div style={{ fontSize: '10px', fontWeight: '600', opacity: 0.72, marginTop: '3px', letterSpacing: '0.04em' }}>Shop 20, Adejoke Plaza, 1 Oshitelu Street, Beside GTBANK Computer Village, Ikeja</div>
             </div>
@@ -1718,6 +1718,20 @@ function App() {
                 <span style={{ fontSize: '9px', letterSpacing: '0.22em', color: '#6b7280', marginTop: '2px' }}>*{activeReceipt?.id?.replace(/-/g, '')}*</span>
               </div>
             )}
+
+            {/* ── SIGNATURE BLOCK ── */}
+            <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', gap: '32px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '4px' }}>Customer Signature</div>
+                <div style={{ borderBottom: '1.5px solid #374151', height: '36px' }} />
+                <div style={{ fontSize: '8px', color: '#9ca3af', marginTop: '4px' }}>Name: ____________________________</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', marginBottom: '4px' }}>Authorised Signature &amp; Stamp</div>
+                <div style={{ borderBottom: '1.5px solid #374151', height: '36px' }} />
+                <div style={{ fontSize: '8px', color: '#9ca3af', marginTop: '4px' }}>Chuks Technology &mdash; Official</div>
+              </div>
+            </div>
 
             {/* ── FOOTER ── */}
             {showGreetings && (
